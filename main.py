@@ -6,5 +6,5 @@ if __name__ == "__main__":
     Utils.validate_url(input_link)
     Utils.convert2pdf()
     shutil.rmtree("Cache")
-    print("Done! All comics have been downloaded and converted to PDF. Check the 'Books' folder.")
+    print("\nDone! All comics have been downloaded and converted to PDF. Check the 'Books' folder.\n")
     
