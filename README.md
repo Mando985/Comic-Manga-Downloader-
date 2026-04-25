@@ -3,8 +3,8 @@
 Download the files or 
 
 ```bash
-git clone
-cd 
+git clone https://github.com/Mando985/Comic-Manga-Downloader-.git
+cd Comic-Manga-Downloader
 ```
 
 Create a virtual environment and activate it to install requirements.
