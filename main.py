@@ -1,5 +1,10 @@
-from readcomics import ReadComicsOnline as Read
+from utils import Utils
+import shutil
 
 if __name__ == "__main__":
     input_link = input("Enter the comic issue link:\n>>")
-    Read.get_issue_links(input_link)
+    Utils.validate_url(input_link)
+    Utils.convert2pdf()
+    shutil.rmtree("Cache")
+    print("Done! All comics have been downloaded and converted to PDF. Check the 'Books' folder.")
+    

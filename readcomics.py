@@ -1,6 +1,6 @@
 from scrapling import StealthyFetcher
 import os
-from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
+from concurrent.futures import ThreadPoolExecutor
 
 
 def download_image(pagelists):
