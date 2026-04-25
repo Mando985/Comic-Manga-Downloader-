@@ -1,7 +1,7 @@
 from scrapling import StealthyFetcher
-import requests
 import os
 from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
+
 
 def download_image(pagelists):
         issue = pagelists.split('/')[- 1].split('?')[0]
@@ -47,5 +47,5 @@ class ReadComicsOnline:
         
 
 if __name__ == "__main__":
-    url='https://readcomiconline.li/Comic/Frankenstein-New-World-The-Speed-of-Darkness/Issue-1?id=244314#1'
+    url=''
     ReadComicsOnline.get_issue_links(url)
