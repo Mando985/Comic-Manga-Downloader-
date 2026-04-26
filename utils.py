@@ -7,6 +7,7 @@ import img2pdf
 def convert_issue(args):
         comic_name, issue_dir = args
         images = sorted(issue_dir.glob("*.jpg"), key=lambda p: int(p.stem))
+        Path(f"Books/{comic_name}").mkdir(exist_ok=True)
         out_path = Path("Books") / comic_name / f"{comic_name}-{issue_dir.name}.pdf"
         with open(out_path, "wb") as f:
             f.write(img2pdf.convert([str(img) for img in images]))
@@ -23,8 +24,6 @@ class Utils:
 
     @staticmethod
     def convert2pdf():
-        Path("Books").mkdir(exist_ok=True)
-
         jobs = [
             (comic_dir.name, issue_dir)
             for comic_dir in Path("Cache").iterdir() if comic_dir.is_dir()
