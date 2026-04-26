@@ -26,3 +26,6 @@ Now run the main file
 ```bash
 python3 main.py 
 ```
+
+**Warning** 
+Downloading from Readcomiconline can get very CPU intensive, best to make sure you dont have anything else running in the background

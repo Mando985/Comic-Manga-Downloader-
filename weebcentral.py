@@ -14,21 +14,48 @@ def download_image(args):
 
 class WeebCentral:
 
-    
+    failed_urls=[]
+
+    @staticmethod
     def download_issue(urls):
         for url in urls:
-            response = StealthyFetcher.fetch(url=url, headless=True, retries=6)
-            comic_name = response.css(".line-clamp-1.flex-1::text").get()
-            image_urls = response.css("img::attr(src)").getall()
-            cleaned_image_urls = [str(url) for url in image_urls]
-            cleaned_image_urls = [url for url in cleaned_image_urls if url.startswith("https://")]
-            thrds = (os.cpu_count() // 2) + 1
-            #print(cleaned_image_urls)
-
-            issue=cleaned_image_urls[0][cleaned_image_urls[0].rindex('/') + 1 : cleaned_image_urls[0].rindex('-')]
-            args = [(comic_name, issue, u) for u in cleaned_image_urls]
-            with ThreadPoolExecutor(thrds) as pool:
-                results = list(pool.map(download_image, args))
+            try:
+                response = StealthyFetcher.fetch(url=url, headless=True, retries=6)
+                comic_name = response.css(".line-clamp-1.flex-1::text").get()
+                
+                image_urls = response.css("img::attr(src)").getall()
+                cleaned_image_urls = [str(url) for url in image_urls]
+                cleaned_image_urls = [url for url in cleaned_image_urls if url.startswith("https://")]
+                
+                # Guard: Check images exist
+                if not cleaned_image_urls:
+                    print(f"[WARN] No image URLs found for chapter {url}. Skipping.")
+                    WeebCentral.failed_urls.append(url)
+                    continue
+                
+                # Guard: Safely parse issue number from first image URL
+                try:
+                    first_url = cleaned_image_urls[0]
+                    if '-' not in first_url:
+                        print(f"[WARN] Invalid image URL format (no dash): {first_url}. Skipping.")
+                        continue
+                    issue = first_url[first_url.rindex('/') + 1 : first_url.rindex('-')]
+                except (ValueError, IndexError) as e:
+                    print(f"[WARN] Failed to parse issue from URL: {e}. Skipping.")
+                    continue
+                
+                thrds = (os.cpu_count() // 2) + 1
+                args = [(comic_name, issue, u) for u in cleaned_image_urls]
+                with ThreadPoolExecutor(thrds) as pool:
+                    results = list(pool.map(download_image, args))
+                
+                print(f"[OK] Downloaded {len(results)} images for {comic_name} issue {issue}")
+                
+            except Exception as e:
+                print(f"[ERROR] Failed to process chapter {url}: {type(e).__name__}: {e}")
+                continue
+        if WeebCentral.failed_urls!=[]:
+            WeebCentral.download_issue(WeebCentral.failed_urls)
 
     @staticmethod
     def get_issue_links(url):
@@ -39,15 +66,12 @@ class WeebCentral:
         huge_tree=True
         )
 
+        #clicks the button that loads all chapters
         def click_show_all(page):
-            # Get button locator
             button = page.locator("button:has-text('Show All Chapters')")
-            
-            # Scroll into view
             button.scroll_into_view_if_needed()
             page.wait_for_timeout(300)
             
-            # Get bounding box and click with coordinates (more stable)
             box = button.bounding_box()
             if box:
                 page.mouse.click(
@@ -55,8 +79,6 @@ class WeebCentral:
                     box["y"] + box["height"] / 2,
                     delay=100
                 )
-            
-            # Wait for HTMX to load new chapters
             page.wait_for_load_state("networkidle")
 
         response = fetcher.fetch(
@@ -69,6 +91,7 @@ class WeebCentral:
         if cleaned_links==[]:
             WeebCentral.download_issue([url])
         else:
+            print(f"[INFO] Found {len(cleaned_links)} chapters. Starting downloads...")
             WeebCentral.download_issue(cleaned_links)
             
 if __name__ == "__main__":

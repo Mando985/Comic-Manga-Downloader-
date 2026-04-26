@@ -3,12 +3,11 @@ from readcomics import ReadComicsOnline as Read
 from weebcentral import WeebCentral as Weeb
 from pathlib import Path
 import img2pdf
-import os
 
 def convert_issue(args):
         comic_name, issue_dir = args
         images = sorted(issue_dir.glob("*.jpg"), key=lambda p: int(p.stem))
-        out_path = Path("Books") / f"{comic_name}-{issue_dir.name}.pdf"
+        out_path = Path("Books") / comic_name / f"{comic_name}-{issue_dir.name}.pdf"
         with open(out_path, "wb") as f:
             f.write(img2pdf.convert([str(img) for img in images]))
 

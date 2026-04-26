@@ -30,7 +30,11 @@ class ReadComicsOnline:
             max_page = max(page_numbers)+1
 
             list_of_page_numbers = [f"{url[0:url.index('#')+1]}{i}" for i in range(1, max_page + 1)]
-            thrds=(os.cpu_count()//2)+1
+
+            if os.cpu_count()==4:
+                thrds=2
+            else:
+                thrds=(os.cpu_count()//2)+1
             with ThreadPoolExecutor(thrds) as pool:
                 results = pool.map(download_image, list_of_page_numbers)
     
