@@ -55,6 +55,7 @@ class WeebCentral:
                 print(f"[ERROR] Failed to process chapter {url}: {type(e).__name__}: {e}")
                 continue
         if WeebCentral.failed_urls!=[]:
+            failed_urls=set(WeebCentral.failed_urls)
             WeebCentral.download_issue(WeebCentral.failed_urls)
 
     @staticmethod
