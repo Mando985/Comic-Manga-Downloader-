@@ -20,7 +20,7 @@ class WeebCentral:
     def download_issue(urls):
         for url in urls:
             try:
-                response = StealthyFetcher.fetch(url=url, headless=True, retries=6)
+                response = StealthyFetcher.fetch(url=url, headless=True, retries=5)
                 comic_name = response.css(".line-clamp-1.flex-1::text").get()
                 
                 image_urls = response.css("img::attr(src)").getall()
@@ -44,7 +44,7 @@ class WeebCentral:
                     print(f"[WARN] Failed to parse issue from URL: {e}. Skipping.")
                     continue
                 
-                thrds = (os.cpu_count() // 2) + 1
+                thrds = min(32, (os.cpu_count() or 1) * 4)
                 args = [(comic_name, issue, u) for u in cleaned_image_urls]
                 with ThreadPoolExecutor(thrds) as pool:
                     results = list(pool.map(download_image, args))
@@ -55,12 +55,12 @@ class WeebCentral:
                 print(f"[ERROR] Failed to process chapter {url}: {type(e).__name__}: {e}")
                 continue
         if WeebCentral.failed_urls!=[]:
-            failed_urls=set(WeebCentral.failed_urls)
-            WeebCentral.download_issue(WeebCentral.failed_urls)
+            to_retry = list(set(WeebCentral.failed_urls))
+            WeebCentral.failed_urls = []          
+            WeebCentral.download_issue(to_retry)
 
     @staticmethod
     def get_issue_links(url):
-        fetcher = StealthyFetcher()
 
         StealthyFetcher.configure(
         adaptive=True,
@@ -82,10 +82,7 @@ class WeebCentral:
                 )
             page.wait_for_load_state("networkidle")
 
-        response = fetcher.fetch(
-            url=url,
-            page_action=click_show_all
-        )
+        response = StealthyFetcher.fetch(url=url, page_action=click_show_all)
         links2issues=[str(i) for i in response.css("#chapter-list a::attr(href)").getall()]
         cleaned_links=[link for link in links2issues if "https://weebcentral.com/chapters/" in link]
         
