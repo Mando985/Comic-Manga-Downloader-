@@ -1,4 +1,4 @@
-
+**ReadComicOnline site is currently unavailable, work in progress**
 # Set up
 Download the files or 
 
@@ -27,5 +27,4 @@ Now run the main file
 python3 main.py 
 ```
 
-**Warning** 
-Downloading from Readcomiconline can get very CPU intensive, best to make sure you dont have anything else running in the background
+
