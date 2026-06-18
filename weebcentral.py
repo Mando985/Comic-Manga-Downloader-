@@ -20,7 +20,7 @@ class WeebCentral:
     def download_issue(urls):
         for url in urls:
             try:
-                response = StealthyFetcher.fetch(url=url, headless=True, retries=5)
+                response = StealthyFetcher.fetch(url=url, headless=True, retries=6)
                 comic_name = response.css(".line-clamp-1.flex-1::text").get()
                 
                 image_urls = response.css("img::attr(src)").getall()
