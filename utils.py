@@ -1,5 +1,4 @@
 from concurrent.futures import ProcessPoolExecutor
-from readcomics import ReadComicsOnline as Read
 from weebcentral import WeebCentral as Weeb
 from pathlib import Path
 import img2pdf
@@ -16,7 +15,8 @@ class Utils:
     @staticmethod
     def validate_url(url):
         if url.startswith("https://readcomiconline.li"):
-            Read.get_issue_links(url)
+            #Read.get_issue_links(url)
+            pass
         elif url.startswith("https://weebcentral.com"):
             Weeb.get_issue_links(url)
         else:
