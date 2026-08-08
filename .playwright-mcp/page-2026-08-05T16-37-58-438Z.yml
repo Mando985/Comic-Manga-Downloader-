@@ -1,0 +1,83 @@
+- generic [active] [ref=e1]:
+  - banner [ref=e2]:
+    - generic [ref=e3]:
+      - link [ref=e5] [cursor=pointer]:
+        - /url: /
+        - img "Weeb Central Logo" [ref=e6]
+      - searchbox [ref=e9]
+    - navigation [ref=e13]:
+      - generic [ref=e14]:
+        - link "Visit Homepage" [ref=e15] [cursor=pointer]:
+          - /url: /
+          - generic [ref=e18]: Home
+        - link "Visit Advanced Search" [ref=e19] [cursor=pointer]:
+          - /url: /search
+          - generic [ref=e22]: Search
+        - link "Visit General Chat" [ref=e23] [cursor=pointer]:
+          - /url: /general-chat
+          - generic [ref=e25]: General Chat
+        - link "Visit random series" [ref=e26] [cursor=pointer]:
+          - /url: /series/random
+          - generic [ref=e29]: Random
+      - button "Login" [ref=e30] [cursor=pointer]
+  - main [ref=e34]:
+    - generic [ref=e36]:
+      - generic [ref=e37]:
+        - link "Jujutsu Kaisen" [ref=e38] [cursor=pointer]:
+          - /url: https://weebcentral.com/series/01J76XYCERXE60T7FKXVCCAQ0H/Jujutsu-Kaisen
+        - button "Chapter 271.5" [ref=e43] [cursor=pointer]
+        - generic [ref=e47]:
+          - button "Bookmark" [ref=e48] [cursor=pointer]
+          - text: Remove Bookmark
+          - button "Preferences" [ref=e51] [cursor=pointer]
+        - button "PREV" [ref=e54] [cursor=pointer]
+        - button "NEXT" [ref=e58] [cursor=pointer]
+      - text: Bookmark Delete Bookmark Preferences
+    - generic:
+      - img "Page 1"
+      - img "Page 2"
+      - img "Page 3"
+      - img "Page 4"
+      - img "Page 5"
+      - img "Page 6"
+      - img "Page 7"
+      - img "Page 8"
+      - img "Page 9"
+      - img "Page 10"
+      - img "Page 11"
+      - img "Page 12"
+      - img "Page 13"
+      - img "Page 14"
+      - img "Page 15"
+      - img "Page 16"
+      - img "Page 17"
+      - img "Page 18"
+      - img "Page 19"
+      - img "Page 20"
+      - img "Page 21"
+      - img "Page 22"
+    - button "Click to reveal comments" [ref=e63] [cursor=pointer]
+    - generic [ref=e68]:
+      - generic [ref=e69]:
+        - link "Jujutsu Kaisen" [ref=e70] [cursor=pointer]:
+          - /url: https://weebcentral.com/series/01J76XYCERXE60T7FKXVCCAQ0H/Jujutsu-Kaisen
+        - button "Chapter 271.5" [ref=e75] [cursor=pointer]
+        - generic [ref=e79]:
+          - button "Bookmark" [ref=e80] [cursor=pointer]
+          - text: Remove Bookmark
+          - button "Preferences" [ref=e83] [cursor=pointer]
+        - button "PREV" [ref=e86] [cursor=pointer]
+        - button "NEXT" [ref=e90] [cursor=pointer]
+      - text: Bookmark Delete Bookmark Preferences
+    - button "back to top" [ref=e94] [cursor=pointer]
+  - contentinfo [ref=e97]:
+    - button "Report" [ref=e98] [cursor=pointer]
+    - navigation [ref=e102]:
+      - link "Home" [ref=e103] [cursor=pointer]:
+        - /url: /
+      - link "Contact" [ref=e104] [cursor=pointer]:
+        - /url: https://weebcentral.com/contact
+      - link "Privacy" [ref=e105] [cursor=pointer]:
+        - /url: https://weebcentral.com/privacy
+      - link "FAQ" [ref=e106] [cursor=pointer]:
+        - /url: https://weebcentral.com/faq

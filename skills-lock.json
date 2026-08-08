@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "skills": {
+    "scrape": {
+      "source": "zytedata/skills",
+      "sourceType": "github",
+      "skillPath": "skills/scrape/SKILL.md",
+      "computedHash": "3ed5b0202c3fe944d71fe03328f65e1d9dc62b6d7d4df55dd702856d4ebf96e6"
+    }
+  }
+}

@@ -5,3 +5,7 @@ extra.txt
 Books
 diagnose.py
 log.txt
+.agents
+.playwright-mcp
+skills-lock.json
+reference.md
