@@ -51,20 +51,20 @@ class weebcentral:
         selector = Selector(text=res)
         page_links = selector.css("img::attr(src)").getall()
 
-        os.makedirs(f"{title}/{issue}", exist_ok=True)
+        os.makedirs(f"Cache/{title}/{issue}", exist_ok=True)
 
         for i in page_links:
             try:
                 img_res = requests.get(i, headers=headers)
                 img_res.raise_for_status()
                 filename = i.split("/")[-1].split("?")[0]
-                with open(os.path.join(f"{title}/{issue}", filename), "wb") as f:
+                with open(os.path.join(f"Cache/{title}/{issue}", filename), "wb") as f:
                     f.write(img_res.content)
             except Exception as e:
                 print(f"[{issue_id}] failed on {i}: {e}")
 
     def manga_downloader(self):
-        links = (self.get_issue_links(self.id))[:10]
-        selected_links=self.chosen_issues(links)
+        links = (self.get_issue_links(self.id))[:3]
+        #selected_links=self.chosen_issues(links)
         with ProcessPoolExecutor(max_workers=os.cpu_count()) as pool:
-            results = pool.map(self.issue_downloader, selected_links)
+            list(pool.map(self.issue_downloader, links))
