@@ -1,0 +1,15 @@
+__pycache__
+Cache/
+test.py
+extra.txt
+Books/
+diagnose.py
+log.txt
+.agents
+.playwright-mcp
+skills-lock.json
+reference.md
+mcp
+file1.md
+.ruff_cache
+temp.py
