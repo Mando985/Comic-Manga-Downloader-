@@ -2,7 +2,7 @@ __pycache__
 Cache/
 test.py
 extra.txt
-Books
+Books/
 diagnose.py
 log.txt
 .agents

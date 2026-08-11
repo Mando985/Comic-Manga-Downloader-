@@ -2,9 +2,7 @@ import os
 import re
 
 import requests
-from PIL import Image
-from rich.style import Style
-from rich.text import Text
+from PIL import Image as PILImage
 from scrapy import Selector
 from textual import work
 from textual.app import App, ComposeResult
@@ -12,6 +10,8 @@ from textual.containers import Container, Horizontal, Vertical
 from textual.screen import Screen
 from textual.widgets import (
     Button,
+    Footer,
+    Header,
     Input,
     OptionList,
     ProgressBar,
@@ -20,6 +20,7 @@ from textual.widgets import (
 )
 from textual.widgets.option_list import Option
 from textual.widgets.selection_list import Selection
+from textual_image.widget import Image as TextualImage
 
 from comic_downloader.utils import utils
 from comic_downloader.weebcentral import weebcentral
@@ -90,51 +91,6 @@ def get_chapters(manga_id: str) -> list[tuple[str, str]]:
     return list(reversed(pairs))
 
 
-def image_to_text(path: str, cols: int, rows: int) -> Text:
-    img = Image.open(path).convert("RGB")
-    target_h = max(2, rows * 2)
-    scale = min(cols / img.width, target_h / img.height)
-    new_w = max(1, int(img.width * scale))
-    new_h = max(2, int(img.height * scale))
-    if new_h % 2:
-        new_h -= 1
-    img = img.resize((new_w, new_h), Image.LANCZOS)
-    px = img.load()
-    text = Text()
-    for y in range(0, new_h, 2):
-        for x in range(new_w):
-            top = px[x, y]
-            bottom = px[x, y + 1]
-            style = Style(
-                color=f"rgb({top[0]},{top[1]},{top[2]})",
-                bgcolor=f"rgb({bottom[0]},{bottom[1]},{bottom[2]})",
-            )
-            text.append("\u2580", style=style)
-        text.append("\n")
-    return text
-
-
-class CoverImage(Static):
-    def __init__(self, path: str | None, **kwargs) -> None:
-        super().__init__("", **kwargs)
-        self.path = path
-
-    def render(self):
-        if not self.path or not os.path.exists(self.path):
-            return "[dim]No cover available[/]"
-        w = self.size.width - 2
-        h = self.size.height - 2
-        if w < 6 or h < 2:
-            return ""
-        try:
-            return image_to_text(self.path, w, h)
-        except Exception:
-            return "[red]Failed to render cover[/]"
-
-    def on_resize(self) -> None:
-        self.refresh()
-
-
 class SearchScreen(Screen):
     BINDINGS = [("down", "focus_results", "Results")]
 
@@ -144,13 +100,17 @@ class SearchScreen(Screen):
         self._timer = None
 
     def compose(self) -> ComposeResult:
+        yield Header()
         yield Container(
+            Static("Comic Downloader", id="search-title"),
             Input(placeholder="Search manga...", id="search-input"),
             OptionList(id="suggestions"),
             id="search-box",
         )
+        yield Footer()
 
     def on_mount(self) -> None:
+        self.query_one("#suggestions", OptionList).display = False
         self.query_one("#search-input", Input).focus()
 
     def on_input_changed(self, event: Input.Changed) -> None:
@@ -230,14 +190,23 @@ class MangaScreen(Screen):
         self.all_chapters: list[tuple[str, str]] = []
 
     def compose(self) -> ComposeResult:
+        yield Header()
         yield Horizontal(
             Vertical(
                 Static(self.manga_name, id="manga-name"),
-                CoverImage(None, id="cover"),
+                Container(
+                    TextualImage(id="cover-image"),
+                    Static("Cover unavailable", id="cover-fallback"),
+                    id="cover",
+                ),
                 id="left-panel",
             ),
             Vertical(
                 Static("Loading chapters...", id="status"),
+                Static(
+                    "For specific issues, click on the chapters to check it",
+                    id="hint",
+                ),
                 SelectionList(id="picker"),
                 Horizontal(
                     Button("Cancel", variant="error", id="cancel"),
@@ -249,6 +218,7 @@ class MangaScreen(Screen):
             ),
             id="manga-layout",
         )
+        yield Footer()
 
     def on_mount(self) -> None:
         self.query_one("#dl-all", Button).disabled = True
@@ -256,7 +226,7 @@ class MangaScreen(Screen):
         self.load_cover()
         self.fetch_chapters()
 
-    @work(exclusive=True, thread=True)
+    @work(group="cover", exclusive=True, thread=True)
     def load_cover(self) -> None:
         path = None
         try:
@@ -275,11 +245,19 @@ class MangaScreen(Screen):
         self.app.call_from_thread(self.set_cover, path)
 
     def set_cover(self, path: str | None) -> None:
-        cover = self.query_one("#cover", CoverImage)
-        cover.path = path
-        cover.refresh()
+        cover = self.query_one("#cover-image", TextualImage)
+        fallback = self.query_one("#cover-fallback", Static)
+        image = None
+        if path and os.path.exists(path):
+            try:
+                image = PILImage.open(path)
+            except Exception:
+                image = None
+        cover.image = image
+        cover.display = image is not None
+        fallback.display = image is None
 
-    @work(exclusive=True, thread=True)
+    @work(group="chapters", exclusive=True, thread=True)
     def fetch_chapters(self) -> None:
         try:
             pairs = get_chapters(self.manga_id)
@@ -305,6 +283,8 @@ class MangaScreen(Screen):
         b = event.button.id
         if b == "cancel":
             self.app.pop_screen()
+            if isinstance(self.app.screen, SearchScreen):
+                self.app.screen.clear_input()
         elif b == "dl-all":
             ids = [cid for cid, _ in self.all_chapters]
             self.app.push_screen(DownloadScreen(self.manga, ids, self.manga_name))
@@ -312,7 +292,6 @@ class MangaScreen(Screen):
             picker = self.query_one("#picker", SelectionList)
             selected = set(picker.selected)
             if not selected:
-                self.update_status("No chapters selected.")
                 return
             ids = [cid for cid, _ in self.all_chapters if cid in selected]
             self.app.push_screen(DownloadScreen(self.manga, ids, self.manga_name))
@@ -326,6 +305,7 @@ class DownloadScreen(Screen):
         self.manga_name = name
 
     def compose(self) -> ComposeResult:
+        yield Header()
         yield Vertical(
             Static(f"Downloading {self.manga_name}", id="dl-title"),
             Static("Preparing...", id="status"),
@@ -333,6 +313,7 @@ class DownloadScreen(Screen):
             Button("Done", variant="success", id="done"),
             id="dl-box",
         )
+        yield Footer()
 
     def on_mount(self) -> None:
         self.query_one("#done", Button).display = False
@@ -341,7 +322,7 @@ class DownloadScreen(Screen):
         )
         self.run_download(self.chosen_ids)
 
-    @work(exclusive=True, thread=True)
+    @work(group="download", exclusive=True, thread=True)
     def run_download(self, ids: list[str]) -> None:
         self.manga.manga_downloader(
             chosen_ids=ids,
@@ -358,7 +339,7 @@ class DownloadScreen(Screen):
         self.update_status("Download complete. Converting to PDF...")
         self.convert_pdf()
 
-    @work(exclusive=True, thread=True)
+    @work(group="pdf", exclusive=True, thread=True)
     def convert_pdf(self) -> None:
         try:
             utils.convert2pdf()
@@ -394,23 +375,39 @@ class DownloadScreen(Screen):
 
 class ComicApp(App):
     TITLE = "Comic Downloader"
+    BINDINGS = [("ctrl+q", "quit", "Quit")]
 
     CSS = """
-    #search-box {
+    SearchScreen {
         align: center middle;
+    }
+    #search-box {
         width: 60%;
-        height: 100%;
+        height: auto;
+        border: round $primary;
+        background: $panel;
+        padding: 2 3;
+    }
+    #search-title {
+        height: auto;
+        text-align: center;
+        text-style: bold;
+        color: $primary;
+        margin-bottom: 1;
     }
     #search-input {
         width: 100%;
     }
     #suggestions {
         width: 100%;
-        max-height: 50%;
+        max-height: 12;
+        margin-top: 1;
+        border: solid $surface;
     }
 
     #manga-layout {
-        height: 100%;
+        height: 1fr;
+        margin: 0 1;
     }
     #left-panel {
         width: 2fr;
@@ -430,12 +427,27 @@ class ComicApp(App):
     }
     #cover {
         height: 1fr;
-        border: solid $primary;
+        border: round $primary;
         padding: 1;
+        align: center middle;
+        overflow: hidden;
+    }
+    #cover-image {
+        width: auto;
+        height: 100%;
+    }
+    #cover-fallback {
+        color: $text-muted;
+        text-style: italic;
     }
     #status {
         height: 1;
         padding: 0 1;
+    }
+    #hint {
+        height: 1;
+        padding: 0 1;
+        color: $text-muted;
     }
     #picker {
         height: 1fr;
@@ -451,12 +463,18 @@ class ComicApp(App):
         margin: 0 1;
     }
 
-    #dl-box {
+    DownloadScreen {
         align: center middle;
+    }
+    #dl-box {
         width: 60%;
-        height: 100%;
+        height: auto;
+        border: round $primary;
+        background: $panel;
+        padding: 2 3;
     }
     #dl-title {
+        text-align: center;
         text-style: bold;
         margin-bottom: 1;
     }
@@ -465,6 +483,7 @@ class ComicApp(App):
         margin: 1 0;
     }
     #done {
+        width: 50%;
         margin-top: 1;
     }
     """
