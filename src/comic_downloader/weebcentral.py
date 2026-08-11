@@ -1,5 +1,5 @@
 import os
-from concurrent.futures import ProcessPoolExecutor
+from concurrent.futures import ThreadPoolExecutor, as_completed
 import requests
 from scrapy import Selector
 
@@ -22,8 +22,14 @@ class weebcentral:
         issue_ids = [i.split("/")[-1] for i in links]
         return issue_ids
 
-    def chosen_links(links):
-        ...
+    def chosen_links(self, chosen_ids: list[str] | None = None) -> list[str]:
+        """Return either the ids the user picked, or every chapter if none were passed."""
+        all_ids = self.get_issue_links(self.id)
+        if chosen_ids is None:
+            return all_ids
+        # preserve the site's ordering, just filter down to what was chosen
+        chosen_set = set(chosen_ids)
+        return [i for i in all_ids if i in chosen_set]
 
     def issue_downloader(self, issue_id):
         iurl = f"https://weebcentral.com/chapters/{issue_id}"
@@ -63,8 +69,27 @@ class weebcentral:
             except Exception as e:
                 print(f"[{issue_id}] failed on {i}: {e}")
 
-    def manga_downloader(self):
-        links = (self.get_issue_links(self.id))[:3]
-        #selected_links=self.chosen_issues(links)
-        with ProcessPoolExecutor(max_workers=os.cpu_count()) as pool:
-            list(pool.map(self.issue_downloader, links))
+    def manga_downloader(self,chosen_ids: list[str] | None = None, progress_callback=None, status_callback=None):
+        links = self.chosen_links(chosen_ids)
+        total = len(links)
+        completed = 0
+
+        if status_callback:
+            status_callback(f"Found {total} chapters, starting download...")
+
+        with ThreadPoolExecutor(max_workers=os.cpu_count()) as pool:
+            futures = {pool.submit(self.issue_downloader, link): link for link in links}
+
+            for future in as_completed(futures):
+                link = futures[future]
+                try:
+                    future.result()
+                    completed += 1
+                    if progress_callback:
+                        progress_callback(completed, total)
+                except Exception as e:
+                    if status_callback:
+                        status_callback(f"Failed: {link} ({e})")
+
+        if status_callback:
+            status_callback("Download complete ")
