@@ -9,3 +9,7 @@ log.txt
 .playwright-mcp
 skills-lock.json
 reference.md
+mcp
+file1.md
+.ruff_cache
+temp.py

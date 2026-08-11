@@ -6,6 +6,12 @@
       "sourceType": "github",
       "skillPath": "skills/scrape/SKILL.md",
       "computedHash": "3ed5b0202c3fe944d71fe03328f65e1d9dc62b6d7d4df55dd702856d4ebf96e6"
+    },
+    "scrapy-web-scraping": {
+      "source": "mindrally/skills",
+      "sourceType": "github",
+      "skillPath": "scrapy-web-scraping/SKILL.md",
+      "computedHash": "81ef1d3ae4058dcd39dafec2e77f81797e6134911f9252973e0cf534c1afe6ab"
     }
   }
 }

@@ -1,0 +1,16 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "mcp": {
+    "textualize": {
+      "type": "local",
+      "command": [
+        "uv",
+        "--directory",
+        "/home/madhav/Projects/Comic_Downloader/mcp",
+        "run",
+        "textualize-mcp"
+      ],
+      "enabled": true
+    }
+  }
+}
