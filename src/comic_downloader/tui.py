@@ -8,6 +8,7 @@ from textual import work
 from textual.app import App, ComposeResult
 from textual.containers import Container, Horizontal, Vertical
 from textual.screen import Screen
+from textual.theme import Theme
 from textual.widgets import (
     Button,
     Footer,
@@ -45,6 +46,31 @@ SEARCH_HEADERS = {
 }
 
 COVER_DIR = os.path.join("Cache", "covers")
+
+NORD_COMIC = Theme(
+    name="nord-comic",
+    primary="#88C0D0",
+    secondary="#81A1C1",
+    accent="#BF616A",
+    warning="#EBCB8B",
+    error="#BF616A",
+    success="#A3BE8C",
+    foreground="#D8DEE9",
+    background="#2E3440",
+    surface="#3B4252",
+    panel="#434C5E",
+    boost="#4C566A",
+    dark=True,
+    variables={
+        "block-cursor-background": "#88C0D0",
+        "block-cursor-foreground": "#2E3440",
+        "block-cursor-text-style": "bold",
+        "button-color-foreground": "#2E3440",
+        "button-focus-text-style": "bold reverse",
+        "footer-key-foreground": "#88C0D0",
+        "input-selection-background": "#81a1c1 35%",
+    },
+)
 
 
 def search_manga(text: str) -> list[dict]:
@@ -102,7 +128,8 @@ class SearchScreen(Screen):
     def compose(self) -> ComposeResult:
         yield Header()
         yield Container(
-            Static("Comic Downloader", id="search-title"),
+            Static("[bold $accent]◆[/] [bold]COMIC DOWNLOADER[/] [bold $accent]◆[/]", id="search-title"),
+            Static("Search & download manga from WeebCentral", id="search-tagline"),
             Input(placeholder="Search manga...", id="search-input"),
             OptionList(id="suggestions"),
             id="search-box",
@@ -110,6 +137,8 @@ class SearchScreen(Screen):
         yield Footer()
 
     def on_mount(self) -> None:
+        self.styles.opacity = 0.0
+        self.styles.animate("opacity", 1.0, duration=0.25)
         self.query_one("#suggestions", OptionList).display = False
         self.query_one("#search-input", Input).focus()
 
@@ -193,7 +222,7 @@ class MangaScreen(Screen):
         yield Header()
         yield Horizontal(
             Vertical(
-                Static(self.manga_name, id="manga-name"),
+                Static(f"[bold]{self.manga_name}[/]", id="manga-name"),
                 Container(
                     TextualImage(id="cover-image"),
                     Static("Cover unavailable", id="cover-fallback"),
@@ -208,19 +237,21 @@ class MangaScreen(Screen):
                     id="hint",
                 ),
                 SelectionList(id="picker"),
-                Horizontal(
-                    Button("Cancel", variant="error", id="cancel"),
-                    Button("Download All", variant="success", id="dl-all"),
-                    Button("Download Selected", variant="primary", id="dl-selected"),
-                    id="buttons",
-                ),
                 id="right-panel",
             ),
             id="manga-layout",
         )
+        yield Horizontal(
+            Button("✕ Cancel", variant="error", id="cancel"),
+            Button("▼ Download All", variant="success", id="dl-all"),
+            Button("✓ Download Selected", variant="primary", id="dl-selected"),
+            id="buttons",
+        )
         yield Footer()
 
     def on_mount(self) -> None:
+        self.styles.opacity = 0.0
+        self.styles.animate("opacity", 1.0, duration=0.25)
         self.query_one("#dl-all", Button).disabled = True
         self.query_one("#dl-selected", Button).disabled = True
         self.load_cover()
@@ -307,15 +338,21 @@ class DownloadScreen(Screen):
     def compose(self) -> ComposeResult:
         yield Header()
         yield Vertical(
-            Static(f"Downloading {self.manga_name}", id="dl-title"),
+            Static(f"[bold $accent]▼[/] [bold]Downloading[/] {self.manga_name}", id="dl-title"),
             Static("Preparing...", id="status"),
-            ProgressBar(id="progress", total=100),
-            Button("Done", variant="success", id="done"),
+            Horizontal(
+                ProgressBar(total=100, show_eta=False, show_percentage=False, id="progress"),
+                Static("0% · ch 0/0", id="progress-label"),
+                id="progress-row",
+            ),
+            Button("✓ Done", variant="success", id="done"),
             id="dl-box",
         )
         yield Footer()
 
     def on_mount(self) -> None:
+        self.styles.opacity = 0.0
+        self.styles.animate("opacity", 1.0, duration=0.25)
         self.query_one("#done", Button).display = False
         self.query_one("#progress", ProgressBar).update(
             total=len(self.chosen_ids), progress=0
@@ -354,13 +391,18 @@ class DownloadScreen(Screen):
         self.query_one("#progress", ProgressBar).update(
             total=total, progress=completed
         )
-        self.update_status(f"Downloaded {completed}/{total} chapters...")
+        pct = round(completed * 100 / total) if total else 0
+        self.query_one("#progress-label", Static).update(
+            f"[b $accent]{pct}%[/] · ch [b]{completed}/{total}[/]"
+        )
+        if pct == 0:
+            self.update_status("Downloading chapters...")
 
     def update_status(self, msg: str) -> None:
         self.query_one("#status", Static).update(msg)
 
     def show_done(self) -> None:
-        self.query_one("#progress", ProgressBar).display = False
+        self.query_one("#progress-row").display = False
         done = self.query_one("#done", Button)
         done.display = True
         done.focus()
@@ -382,9 +424,10 @@ class ComicApp(App):
         align: center middle;
     }
     #search-box {
-        width: 60%;
+        width: 62%;
+        max-width: 96;
         height: auto;
-        border: round $primary;
+        border: heavy $primary;
         background: $panel;
         padding: 2 3;
     }
@@ -395,14 +438,26 @@ class ComicApp(App):
         color: $primary;
         margin-bottom: 1;
     }
+    #search-tagline {
+        height: auto;
+        text-align: center;
+        color: $text-muted;
+        margin-bottom: 2;
+    }
     #search-input {
         width: 100%;
+        border: solid $primary-darken-1;
+        background: $surface;
+    }
+    #search-input:focus {
+        border: solid $primary;
     }
     #suggestions {
         width: 100%;
         max-height: 12;
         margin-top: 1;
-        border: solid $surface;
+        border: solid $primary-darken-1;
+        background: $surface;
     }
 
     #manga-layout {
@@ -412,22 +467,26 @@ class ComicApp(App):
     #left-panel {
         width: 2fr;
         height: 100%;
-        padding: 1;
+        padding: 1 1 1 0;
     }
     #right-panel {
         width: 3fr;
         height: 100%;
-        padding: 1 2;
+        padding: 1 0 1 2;
     }
     #manga-name {
-        height: 3;
+        height: auto;
         text-align: center;
         text-style: bold;
         color: $primary;
+        padding: 0 1 1 1;
+        margin-bottom: 1;
+        border-bottom: solid $primary-darken-1;
     }
     #cover {
         height: 1fr;
-        border: round $primary;
+        border: heavy $primary;
+        background: $panel;
         padding: 1;
         align: center middle;
         overflow: hidden;
@@ -443,44 +502,70 @@ class ComicApp(App):
     #status {
         height: 1;
         padding: 0 1;
+        color: $text-muted;
     }
     #hint {
         height: 1;
         padding: 0 1;
         color: $text-muted;
+        text-style: italic;
     }
     #picker {
         height: 1fr;
-        border: solid $primary;
+        border: solid $primary-darken-1;
+        background: $surface;
         margin-top: 1;
     }
     #buttons {
         height: auto;
         align: center middle;
-        padding: 1;
+        padding: 1 0;
+        border-top: solid $primary-darken-1;
     }
     #buttons Button {
         margin: 0 1;
+        height: 3;
+        min-width: 22;
+        text-style: bold;
     }
 
     DownloadScreen {
         align: center middle;
     }
     #dl-box {
-        width: 60%;
+        width: 62%;
+        max-width: 96;
         height: auto;
-        border: round $primary;
+        border: heavy $primary;
         background: $panel;
         padding: 2 3;
     }
-    #dl-title {
+    #dl-box #dl-title {
         text-align: center;
         text-style: bold;
+        color: $primary;
         margin-bottom: 1;
     }
-    #progress {
+    #dl-box #status {
+        text-align: center;
+        color: $text-muted;
+    }
+    #progress-row {
+        height: 3;
         width: 100%;
+        border: solid $primary-darken-1;
+        background: $surface;
+        padding: 0 1;
+        align: center middle;
         margin: 1 0;
+    }
+    #progress-row #progress {
+        width: 1fr;
+        height: 1;
+    }
+    #progress-label {
+        width: auto;
+        margin-left: 1;
     }
     #done {
         width: 50%;
@@ -489,6 +574,8 @@ class ComicApp(App):
     """
 
     def on_mount(self) -> None:
+        self.register_theme(NORD_COMIC)
+        self.theme = "nord-comic"
         self.push_screen(SearchScreen())
 
 

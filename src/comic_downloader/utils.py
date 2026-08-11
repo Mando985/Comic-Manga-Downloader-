@@ -11,8 +11,14 @@ class utils:
         Path(f"Books/{comic_name}").mkdir(parents=True, exist_ok=True)
         out_path = Path("Books") / comic_name / f"{comic_name}-{issue_dir.name}.pdf"
         with open(out_path, "wb") as f:
-            f.write(img2pdf.convert([str(img) for img in images]))
-
+            for img in images:
+                try:
+                    f.write(img2pdf.convert([str(img)]))
+                except img2pdf.PdfTooLargeError as e:
+                    print(f"Skipping oversized page {img}: {e}")
+        if out_path.stat().st_size == 0:
+            out_path.unlink()
+            
     @staticmethod
     def convert2pdf():
         jobs = [
