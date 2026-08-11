@@ -13,3 +13,4 @@ mcp
 file1.md
 .ruff_cache
 temp.py
+.playwright-mcp
