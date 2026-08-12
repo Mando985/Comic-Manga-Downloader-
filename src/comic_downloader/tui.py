@@ -128,7 +128,10 @@ class SearchScreen(Screen):
     def compose(self) -> ComposeResult:
         yield Header()
         yield Container(
-            Static("[bold $accent]◆[/] [bold]COMIC DOWNLOADER[/] [bold $accent]◆[/]", id="search-title"),
+            Static(
+                "[bold $accent]◆[/] [bold]COMIC DOWNLOADER[/] [bold $accent]◆[/]",
+                id="search-title",
+            ),
             Static("Search & download manga from WeebCentral", id="search-tagline"),
             Input(placeholder="Search manga...", id="search-input"),
             OptionList(id="suggestions"),
@@ -293,7 +296,9 @@ class MangaScreen(Screen):
         try:
             pairs = get_chapters(self.manga_id)
         except Exception as e:
-            self.app.call_from_thread(self.update_status, f"Failed to fetch chapters: {e}")
+            self.app.call_from_thread(
+                self.update_status, f"Failed to fetch chapters: {e}"
+            )
             return
         self.app.call_from_thread(self.populate_list, pairs)
 
@@ -338,10 +343,15 @@ class DownloadScreen(Screen):
     def compose(self) -> ComposeResult:
         yield Header()
         yield Vertical(
-            Static(f"[bold $accent]▼[/] [bold]Downloading[/] {self.manga_name}", id="dl-title"),
+            Static(
+                f"[bold $accent]▼[/] [bold]Downloading[/] {self.manga_name}",
+                id="dl-title",
+            ),
             Static("Preparing...", id="status"),
             Horizontal(
-                ProgressBar(total=100, show_eta=False, show_percentage=False, id="progress"),
+                ProgressBar(
+                    total=100, show_eta=False, show_percentage=False, id="progress"
+                ),
                 Static("0% · ch 0/0", id="progress-label"),
                 id="progress-row",
             ),
@@ -366,9 +376,7 @@ class DownloadScreen(Screen):
             progress_callback=lambda c, t: self.app.call_from_thread(
                 self.update_progress, c, t
             ),
-            status_callback=lambda m: self.app.call_from_thread(
-                self.update_status, m
-            ),
+            status_callback=lambda m: self.app.call_from_thread(self.update_status, m),
         )
         self.app.call_from_thread(self.after_download)
 
@@ -382,15 +390,11 @@ class DownloadScreen(Screen):
             utils.convert2pdf()
             self.app.call_from_thread(self.update_status, "Done! PDFs saved to Books/")
         except Exception as e:
-            self.app.call_from_thread(
-                self.update_status, f"PDF conversion failed: {e}"
-            )
+            self.app.call_from_thread(self.update_status, f"PDF conversion failed: {e}")
         self.app.call_from_thread(self.show_done)
 
     def update_progress(self, completed: int, total: int) -> None:
-        self.query_one("#progress", ProgressBar).update(
-            total=total, progress=completed
-        )
+        self.query_one("#progress", ProgressBar).update(total=total, progress=completed)
         pct = round(completed * 100 / total) if total else 0
         self.query_one("#progress-label", Static).update(
             f"[b $accent]{pct}%[/] · ch [b]{completed}/{total}[/]"

@@ -8,7 +8,8 @@ class weebcentral:
     def __init__(self, id):
         self.id = id
 
-    def get_issue_links(self,id):
+    #gets the list of chapters and its ids
+    def get_issue_links(self, id)->list[str]:
         url = f"https://weebcentral.com/series/{id}/full-chapter-list"
         headers = {
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36"
@@ -23,9 +24,9 @@ class weebcentral:
         return issue_ids
 
     def chosen_links(self, chosen_ids: list[str] | None = None) -> list[str]:
-        """Return either the ids the user picked, or every chapter if none were passed."""
+        #Return either the ids the user picked, or every chapter if none were passed.
         all_ids = self.get_issue_links(self.id)
-        if chosen_ids is None:
+        if chosen_ids is None: #chosen_id is recived from the TUI end 
             return all_ids
         # preserve the site's ordering, just filter down to what was chosen
         chosen_set = set(chosen_ids)
@@ -69,7 +70,14 @@ class weebcentral:
             except Exception as e:
                 print(f"[{issue_id}] failed on {i}: {e}")
 
-    def manga_downloader(self,chosen_ids: list[str] | None = None, progress_callback=None, status_callback=None):
+    def manga_downloader(
+        self,
+        chosen_ids: list[str] | None = None,
+        progress_callback=None,
+        status_callback=None,
+    ):
+        #progress_callback and status_callback is for tracking the progress so the TUI can display it
+
         links = self.chosen_links(chosen_ids)
         total = len(links)
         completed = 0
