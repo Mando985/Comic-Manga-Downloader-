@@ -99,24 +99,6 @@ def search_manga(text: str) -> list[dict]:
     return results
 
 
-def get_chapters(manga_id: str) -> list[tuple[str, str]]:
-    url = f"https://weebcentral.com/series/{manga_id}/full-chapter-list"
-    headers = {"User-Agent": USER_AGENT}
-    res = requests.get(url, headers=headers, timeout=15).text
-    selector = Selector(text=res)
-    pairs = []
-    for a in selector.css("a[href*='/chapters/']"):
-        href = a.css("::attr(href)").get()
-        if not href:
-            continue
-        cid = href.split("/")[-1]
-        raw = " ".join(a.css("::text").getall())
-        name = re.split(r"\s+Last Read", raw)[0].strip()
-        pairs.append((cid, name))
-    # site lists newest first; reverse for ascending order
-    return list(reversed(pairs))
-
-
 class SearchScreen(Screen):
     BINDINGS = [("down", "focus_results", "Results")]
 
@@ -294,7 +276,7 @@ class MangaScreen(Screen):
     @work(group="chapters", exclusive=True, thread=True)
     def fetch_chapters(self) -> None:
         try:
-            pairs = get_chapters(self.manga_id)
+            pairs = self.manga.get_issue_links(self.manga_id)
         except Exception as e:
             self.app.call_from_thread(
                 self.update_status, f"Failed to fetch chapters: {e}"

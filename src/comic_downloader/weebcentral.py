@@ -2,31 +2,38 @@ import os
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import requests
 from scrapy import Selector
+import re
 
 
 class weebcentral:
     def __init__(self, id):
         self.id = id
 
-    #gets the list of chapters and its ids
-    def get_issue_links(self, id)->list[str]:
+    # gets the list of chapters and its ids
+    def get_issue_links(self, id: str) -> list[tuple[str, str]]:
         url = f"https://weebcentral.com/series/{id}/full-chapter-list"
         headers = {
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36"
         }
 
-        res = requests.get(url, headers=headers)
-        res = res.text
-
+        res = requests.get(url, headers=headers, timeout=15).text
         selector = Selector(text=res)
-        links = selector.css("a[href*='/chapters/']::attr(href)").getall()
-        issue_ids = [i.split("/")[-1] for i in links]
-        return issue_ids
+        pairs = []
+        for a in selector.css("a[href*='/chapters/']"):
+            href = a.css("::attr(href)").get()
+            if not href:
+                continue
+            cid = href.split("/")[-1]
+            raw = " ".join(a.css("::text").getall())
+            name = re.split(r"\s+Last Read", raw)[0].strip()
+            pairs.append((cid, name))
+        # site lists newest first; reverse for ascending order
+        return list(reversed(pairs))  # [(id1,chap1),(id2,chap2)...]
 
     def chosen_links(self, chosen_ids: list[str] | None = None) -> list[str]:
-        #Return either the ids the user picked, or every chapter if none were passed.
-        all_ids = self.get_issue_links(self.id)
-        if chosen_ids is None: #chosen_id is recived from the TUI end 
+        # Return either the ids the user picked, or every chapter if none were passed.
+        all_ids = [link[0] for link in self.get_issue_links(self.id)]
+        if chosen_ids is None:  # chosen_id is recived from the TUI end
             return all_ids
         # preserve the site's ordering, just filter down to what was chosen
         chosen_set = set(chosen_ids)
@@ -76,7 +83,7 @@ class weebcentral:
         progress_callback=None,
         status_callback=None,
     ):
-        #progress_callback and status_callback is for tracking the progress so the TUI can display it
+        # progress_callback and status_callback is for tracking the progress so the TUI can display it
 
         links = self.chosen_links(chosen_ids)
         total = len(links)

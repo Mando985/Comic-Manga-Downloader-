@@ -9,7 +9,10 @@ class utils:
     def convert_issue(args):
         comic_name, issue_dir = args
         images = sorted(
-            issue_dir.glob("*.png"), key=lambda p: int(p.stem.split("-")[-1])   #cleans up the image name and sorts it asc order
+            issue_dir.glob("*.png"),
+            key=lambda p: int(
+                p.stem.split("-")[-1]
+            ),  # cleans up the image name and sorts it asc order
         )
         Path(f"Books/{comic_name}").mkdir(parents=True, exist_ok=True)
         out_path = Path("Books") / comic_name / f"{comic_name}-{issue_dir.name}.pdf"
@@ -18,7 +21,9 @@ class utils:
             try:
                 img2pdf.convert([str(img)])
             except (img2pdf.PdfTooLargeError, ValueError) as e:
-                print(f"Skipping oversized page {img}: {e}")   # these kind of paes tend not to have any content in it
+                print(
+                    f"Skipping oversized page {img}: {e}"
+                )  # these kind of paes tend not to have any content in it
             else:
                 valid.append(str(img))
         if valid:
@@ -27,7 +32,7 @@ class utils:
 
     @staticmethod
     def convert2pdf():
-        #jobs is a list of directory paths in the format [(comic name,issue name), ...]
+        # jobs is a list of directory paths in the format [(comic name,issue name), ...]
         jobs = [
             (comic_dir.name, issue_dir)
             for comic_dir in Path("Cache").iterdir()
@@ -35,7 +40,7 @@ class utils:
             for issue_dir in comic_dir.iterdir()
             if issue_dir.is_dir()
         ]
-        #parallelly converts the images into pdfs
+        # parallelly converts the images into pdfs
         with ProcessPoolExecutor() as pool:
             list(pool.map(utils.convert_issue, jobs))
         shutil.rmtree("Cache")
